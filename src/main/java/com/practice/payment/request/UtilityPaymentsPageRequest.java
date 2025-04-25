@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class UtilityPaymentsPageRequest {
-    private Long pageNo;
+    private Integer pageNo;
     private Integer pageSize;
 }

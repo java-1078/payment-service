@@ -1,6 +1,7 @@
 package com.practice.payment.mapper;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public abstract class BaseMapper<E,D> {
 
@@ -16,4 +17,7 @@ public abstract class BaseMapper<E,D> {
         return entities.stream().map(this::convertToDto).toList();
     }
 
+    public List<D> convertToDtoList(Stream<E> stream){
+       return stream.map(this::convertToDto).toList();
+    }
 }
