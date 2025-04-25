@@ -16,8 +16,8 @@ public class UtilityPaymentEntity {
     private Float amount;
     private String referenceNumber;
     private String account;
-    private String paymentTarget;
     private String transactionId;
+    private String userId;
     @Enumerated
     private TransactionStatus status;
 }

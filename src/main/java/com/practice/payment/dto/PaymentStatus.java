@@ -1,5 +1,6 @@
-package com.practice.payment.model;
+package com.practice.payment.dto;
 
+import com.practice.payment.model.TransactionStatus;
 import lombok.Data;
 
 @Data

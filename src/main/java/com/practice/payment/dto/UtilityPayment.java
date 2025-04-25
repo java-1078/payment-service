@@ -1,4 +1,4 @@
-package com.practice.payment.model;
+package com.practice.payment.dto;
 
 import lombok.Data;
 
