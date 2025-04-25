@@ -9,7 +9,6 @@ public class UtilityPayment {
     private Float amount;
     private String referenceNumber;
     private String account;
-    private String paymentTarget;
-
+    private String userId;
 
 }

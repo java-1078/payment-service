@@ -7,13 +7,18 @@ import com.practice.payment.exception.PaymentNotFoundException;
 import com.practice.payment.mapper.UtilityPaymentMapper;
 import com.practice.payment.model.TransactionStatus;
 import com.practice.payment.repository.UtilityPaymentRepository;
+import com.practice.payment.request.NotifyRequest;
 import com.practice.payment.request.UtilityPaymentsPageRequest;
+import com.practice.payment.response.NotifyResponse;
 import com.practice.payment.response.UtilityPaymentResponse;
+import com.practice.payment.utility.MessageBuilderUtility;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +30,9 @@ import java.util.stream.Stream;
 public class UtilityPaymentService {
 
     private final UtilityPaymentRepository utilityPaymentRepository;
+    private final RestTemplate restTemplate;
+    @Value("${notificationServiceUrl}")
+    private String notifyServiceUrl;
 
     public UtilityPaymentResponse processPayment(UtilityPayment utilityPayment) {
         UtilityPaymentMapper utilityPaymentMapper = new UtilityPaymentMapper();
@@ -34,14 +42,21 @@ public class UtilityPaymentService {
         utilityPaymentEntity.setStatus(paymentStatus.getStatus());
         utilityPaymentEntity.setTransactionId(paymentStatus.getTransactionId());
         UtilityPaymentEntity updatedUtilityPaymentEntity = utilityPaymentRepository.save(utilityPaymentEntity);//
+
+        //call notify service
+
+        NotifyResponse notifyResponse = doNotify(utilityPaymentEntity);
+        updatedUtilityPaymentEntity.setEmailStatus(notifyResponse.getEmailStatus());
+        updatedUtilityPaymentEntity.setSmsStatus(notifyResponse.getSmsStatus());
+
         //
         UtilityPaymentResponse utilityPaymentResponse = new UtilityPaymentResponse();
         utilityPaymentResponse.setTransactionId(paymentStatus.getTransactionId());
-        if(paymentStatus.getStatus().equals(TransactionStatus.FAILED)){
+        if (paymentStatus.getStatus().equals(TransactionStatus.FAILED)) {
             utilityPaymentResponse.setMessage("Your payment Failed ");
         } else if (paymentStatus.getStatus().equals(TransactionStatus.PROCESSING)) {
             utilityPaymentResponse.setMessage("Your payment is in processing");
-        }else {
+        } else {
             utilityPaymentResponse.setMessage("Your payment is done");
         }
         return utilityPaymentResponse;
@@ -66,10 +81,22 @@ public class UtilityPaymentService {
         return utilityPaymentMapper.convertToDtoList(stream);
     }
 
-    private PaymentStatus makePayment(UtilityPayment utilityPayment){
+    private PaymentStatus makePayment(UtilityPayment utilityPayment) {
         PaymentStatus paymentStatus = new PaymentStatus();
         paymentStatus.setStatus(TransactionStatus.SUCCESS);
         paymentStatus.setTransactionId(UUID.randomUUID().toString());
         return paymentStatus;
     }
+
+
+    private NotifyResponse doNotify(UtilityPaymentEntity utilityPaymentEntity) {
+        MessageBuilderUtility messageBuilderUtility = new MessageBuilderUtility();
+        String message = messageBuilderUtility.buildNotifyMessage(utilityPaymentEntity);
+        NotifyRequest notifyRequest = new NotifyRequest();
+        notifyRequest.setUserId(utilityPaymentEntity.getUserId());
+        notifyRequest.setMessage(message);
+        NotifyResponse notifyResponse = restTemplate.postForObject(notifyServiceUrl, notifyRequest, NotifyResponse.class);
+        return notifyResponse;
+    }
+
 }
