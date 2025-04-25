@@ -18,6 +18,8 @@ public class UtilityPaymentEntity {
     private String account;
     private String transactionId;
     private String userId;
+    private String emailStatus;
+    private String smsStatus;
     @Enumerated
     private TransactionStatus status;
 }
